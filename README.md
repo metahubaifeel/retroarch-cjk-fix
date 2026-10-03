@@ -86,6 +86,10 @@ what the text *needs*.
 | [tools/launch-portable-retroarch.sh](tools/launch-portable-retroarch.sh) | Portable install launcher with the font self-repair built in |
 | [docs/shots/](docs/shots/) | All screenshots |
 
+> ⚠️ GitHub doesn't render `.html` files stored in a repo — clicking the tutorial
+> shows you its source. **Download it and open it** to get the actual page
+> (it's self-contained, no network needed).
+
 ### Proof it actually works
 
 <table>
