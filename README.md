@@ -1,13 +1,28 @@
-# RetroArch 中文全是问号 / RetroArch renders CJK as "?"
+# RetroArch renders Chinese as `?`
 
-**English below ↓ · [中文](#中文)**
+**English** · **[中文](README.zh-CN.md)**
 
-RetroArch's UI is completely unreadable in Chinese (and other non-Latin
-languages): every CJK character becomes `?`, while Latin text in the same menu
-renders fine. The fonts are fine. The problem is a **filename mismatch** between
-two Debian/Ubuntu packages.
+RetroArch's interface is completely unreadable in Chinese — and in several other
+non-Latin languages. Every CJK character becomes `?`, while the Latin text in the
+very same menu renders perfectly.
 
-```
+The fonts are fine. The problem is a **filename mismatch** between two
+Debian/Ubuntu packages.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/shots/1-symptom-all-question-marks.png" width="100%" alt="RetroArch menu with every Chinese character replaced by a question mark"></td>
+<td width="50%"><img src="docs/shots/4-fixed-main-menu.png" width="100%" alt="The same menu after the fix, fully readable in Chinese"></td>
+</tr>
+<tr>
+<td align="center"><sub><b>Before</b> — every label and every Chinese ROM filename is <code>?</code></sub></td>
+<td align="center"><sub><b>After</b> — the two-line fix below</sub></td>
+</tr>
+</table>
+
+## The fix
+
+```bash
 retroarch        looks for  assets/pkg/chinese-fallback-font.ttf
 retroarch-assets installs   assets/pkg/chinese-font.ttf
                                         ↑ missing "-fallback"
@@ -16,7 +31,7 @@ retroarch-assets installs   assets/pkg/chinese-font.ttf
 No file at the expected path → no CJK fallback font is loaded → FreeType
 substitutes `?` for every character the primary Latin UI font doesn't have.
 
-## The fix (30 seconds)
+Two lines, nothing to reinstall:
 
 ```bash
 sudo apt install fonts-droid-fallback
@@ -24,119 +39,87 @@ sudo ln -sf ../../../fonts/truetype/droid/DroidSansFallbackFull.ttf \
        /usr/share/libretro/assets/pkg/chinese-fallback-font.ttf
 ```
 
-Or just run the script, which checks, repairs, and re-verifies:
+Or run the script, which checks, repairs, and **re-verifies**:
 
 ```bash
-sudo ./tools/fix-cjk-font.sh
+sudo ./tools/fix-cjk-font.sh          # add --check to only inspect
 ```
 
-Restart RetroArch afterwards. To switch the UI to Chinese, set
-`user_language = "12"` in `~/.config/retroarch/retroarch.cfg`
-(**12 = Simplified, 11 = Traditional**).
+Then restart RetroArch. To switch the UI to Chinese, set `user_language = "12"`
+in `~/.config/retroarch/retroarch.cfg` (**12 = Simplified, 11 = Traditional**).
 
-## Why it's hard to diagnose
+## Why it's so hard to diagnose
 
-- **English works perfectly.** The UI looks healthy until the moment you change
-  the language, so nothing looks broken beforehand.
-- **It looks exactly like a font-coverage problem.** It isn't. Replacing
-  `ozone/regular.ttf` with a full Noto Sans CJK (44,810 glyphs) does *not* fix
-  it — verified. Only the `pkg/*-fallback-font.ttf` filenames matter.
+Two things make this bug actively misleading:
 
-The clue that breaks it open: **switch the UI back to English but keep the same
-fonts.** Chinese ROM filenames in the playlists render perfectly. Same font, same
-menu, same pixels — so the font, the render path, and the file path are all
-proven good, and the only remaining variable is the language setting itself.
+- **English works perfectly.** The UI looks healthy right up until the moment you
+  change the language, so nothing appears broken beforehand.
+- **It looks exactly like a font-coverage problem.** It isn't.
+
+Here's the wrong turn, and it's an expensive one — replacing the UI font with a
+complete Noto Sans CJK (44,810 glyphs) changes nothing:
+
+<table>
+<tr>
+<td width="50%"><img src="docs/shots/2-noto-cjk-still-fails.png" width="100%" alt="Still question marks after installing a full Noto CJK font"></td>
+<td width="50%"><img src="docs/shots/3-clue-english-mode-ok.png" width="100%" alt="English UI, same fonts — Chinese ROM names render perfectly"></td>
+</tr>
+<tr>
+<td align="center"><sub><b>The wrong turn.</b> Full Noto Sans CJK installed — still every character is <code>?</code>. Font coverage is not the problem.</sub></td>
+<td align="center"><sub><b>The clue that cracks it.</b> Switch back to English, keep the same fonts — the Chinese ROM names render perfectly.</sub></td>
+</tr>
+</table>
+
+The right-hand screenshot is the one that breaks it open. Same font, same menu,
+same pixels: the font is proven good, the render path is proven good, the file
+path is proven good. **The only remaining variable is the language setting
+itself** — which sends you looking at what the language switch *loads*, not at
+what the text *needs*.
 
 ## What's in here
 
 | | |
 |---|---|
-| [`docs/tutorial-zh.html`](docs/tutorial-zh.html) | 中文图文教程，单文件，双击就看（字体和图都内嵌了） |
-| [`docs/bug-report.en.md`](docs/bug-report.en.md) | Ready-to-submit bug report for Debian BTS / Launchpad |
-| [`tools/fix-cjk-font.sh`](tools/fix-cjk-font.sh) | Checks, repairs, and re-verifies. `--check` is read-only. |
-| [`tools/launch-portable-retroarch.sh`](tools/launch-portable-retroarch.sh) | Portable install launcher, with the font self-repair built in |
-| [`docs/shots/`](docs/shots/) | Screenshots: symptom → the decisive clue → fixed |
+| **[docs/tutorial-zh.html](docs/tutorial-zh.html)** | 中文图文教程 — 完整排查过程。单文件，下载后双击即可打开（字体和图都内嵌了）。 |
+| [docs/bug-report.en.md](docs/bug-report.en.md) | Ready-to-submit bug report for Debian BTS / Launchpad |
+| [tools/fix-cjk-font.sh](tools/fix-cjk-font.sh) | Checks, repairs, re-verifies. `--check` is read-only. |
+| [tools/launch-portable-retroarch.sh](tools/launch-portable-retroarch.sh) | Portable install launcher with the font self-repair built in |
+| [docs/shots/](docs/shots/) | All screenshots |
+
+### Proof it actually works
+
+<table>
+<tr>
+<td width="50%"><img src="docs/shots/5-fixed-game-list.png" width="100%" alt="Game list with Chinese titles rendering correctly"></td>
+<td width="50%"><img src="docs/shots/6-save-still-loads.png" width="100%" alt="A Pokemon Emerald save loading correctly"></td>
+</tr>
+<tr>
+<td align="center"><sub>Chinese ROM titles in the playlist</sub></td>
+<td align="center"><sub>And the save still loads — Pokédex 34, 8 badges, 36:28 played</sub></td>
+</tr>
+</table>
 
 ## Scope
 
 This repo is **not** a RetroArch distribution. It's one bug, its diagnosis, and
-the fix. No binaries, no fonts beyond the subset embedded in the tutorial page.
+the fix. No binaries; the only font content is the subset embedded in the
+tutorial page.
 
 Affects `retroarch-assets` `1.7.6+git20230911+dfsg-1` (Ubuntu 24.04 noble, and
 presumably Debian testing/unstable) with `retroarch` `1.18.0+dfsg-1`. The same
-package also ships a `korean-fallback-font.ttf` symlinked to a *Latin* font
-(no Hangul at all), and omits the Thai and Ethiopic fallbacks entirely.
+package also ships a `korean-fallback-font.ttf` symlinked to a **Latin** font
+with no Hangul at all, and omits the Thai and Ethiopic fallbacks entirely.
 
----
+## Help wanted
 
-## 中文
-
-RetroArch 一切到中文，**所有汉字变成一个汉字一个 `?`** —— 菜单、播放列表里的
-中文游戏名全变，拉丁字母照常显示。**字体没问题**，问题出在两个 Debian 包
-对同一个文件名各叫各的：
-
-```
-retroarch 这个程序      去找  assets/pkg/chinese-fallback-font.ttf
-retroarch-assets 这个包 装了  assets/pkg/chinese-font.ttf
-                                      ↑ 少了个 -fallback
-```
-
-程序在约定位置找不到文件，就不加载 CJK 回退字体；主界面的拉丁字体里没有汉字，
-FreeType 只好拿 `?` 顶替。
-
-### 修复（两行）
-
-```bash
-sudo apt install fonts-droid-fallback
-sudo ln -sf ../../../fonts/truetype/droid/DroidSansFallbackFull.ttf \
-       /usr/share/libretro/assets/pkg/chinese-fallback-font.ttf
-```
-
-或者直接跑脚本（会检查 → 修 → 复验）：
-
-```bash
-sudo ./tools/fix-cjk-font.sh
-```
-
-改完重启 RetroArch。语言设置在 `~/.config/retroarch/retroarch.cfg`：
-`user_language = "12"`（**12 = 简体，11 = 繁体，别写错**）。
-
-### 为什么这个坑难查
-
-- **英文界面完全正常** —— 你不切语言就永远看不出任何异样。
-- **症状长得跟"字体缺字"一模一样，但就是不是。** 换完整的 Noto Sans CJK
-  （44,810 个字形）上去照样满屏 `?`，实测过。真正起作用的只有
-  `pkg/*-fallback-font.ttf` 这几个文件名，别的都不相干。
-
-真正的突破口是另一个测试：**把语言切回英文，字体保持同一套不动。**
-这时播放列表里的中文游戏名显示得好好的 —— 同一套字体、同一个菜单、同一批像素，
-于是字体本身、渲染链路、文件路径全部被证明是好的，只剩语言设置这一个变量。
-
-### 目录说明
-
-| | |
-|---|---|
-| `docs/tutorial-zh.html` | 完整排查过程的图文教程（就是本页顶部那个，单文件自包含） |
-| `docs/bug-report.en.md` | 可直接提交给 Debian / Launchpad 的英文错误报告 |
-| `tools/fix-cjk-font.sh` | 检查 + 修复 + 复验；`--check` 只检查不改 |
-| `tools/launch-portable-retroarch.sh` | 便携版启动器，内置字体自修复 |
-| `docs/shots/` | 截图：症状 → 决定性线索 → 修好之后 |
-
-### 范围
-
-这个仓库**不是**一个 RetroArch 发行版，只是「一个 bug + 排查 + 修法」。
-不含任何二进制，字体只有教程页里内嵌的那个子集。
-
-### 想帮忙的话
-
-这个 bug 现在还没有被报上去。如果你在 Debian BTS 或 Launchpad 上提了，
-欢迎开 issue 说一声，我把链接贴上来。报告是现成的：`docs/bug-report.en.md`。
-
----
+This bug hasn't been reported upstream yet. If you file it on the Debian BTS or
+Launchpad, open an issue here and I'll link it. The report is ready to paste:
+[docs/bug-report.en.md](docs/bug-report.en.md).
 
 ## License
 
-Scripts and text: MIT (see `LICENSE`).
+Scripts and text: MIT (see [LICENSE](LICENSE)).
 
 The tutorial page embeds subset fonts — Noto Sans CJK SC (SIL OFL 1.1) and
-DejaVu Sans Mono (Bitstream Vera). Full license texts in `licenses/`.
+DejaVu Sans Mono (Bitstream Vera). Full license texts in
+[licenses/](licenses/).
